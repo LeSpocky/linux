@@ -1057,6 +1057,8 @@ struct macb {
 	struct ptp_clock_info ptp_clock_info;
 	struct tsu_incr tsu_incr;
 	struct hwtstamp_config tstamp_config;
+
+	struct gen_pool		*sram_pool;
 };
 
 #ifdef CONFIG_MACB_USE_HWSTAMP
