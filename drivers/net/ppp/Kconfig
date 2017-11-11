@@ -68,6 +68,16 @@ config PPP_DEFLATE
 
 	  To compile this driver as a module, choose M here.
 
+config PPP_LZSCOMP
+	tristate "PPP LZS compression"
+	depends on PPP
+	---help---
+	  This enables Stac/HiFn LZS compression (RFC 1974) for PPP.
+	  The other end has to support it as well for this to 
+	  be useful.
+
+	  If unsure, say N.
+
 config PPP_FILTER
 	bool "PPP filtering"
 	depends on PPP
