@@ -56,6 +56,21 @@ config ISDN_PPP_BSDCOMP
 	  method as well for this to be useful. Even if they don't support it,
 	  it is safe to say Y here.
 
+config ISDN_PPP_LZSCOMP
+	tristate "Support LZS compression"
+	depends on ISDN_PPP
+	help
+	  This enables Stac/HiFn LZS compression (RFC 1974) for synchronous PPP
+	  over ISDN lines. The other end has to support it as well for this to 
+	  be useful and you have to give the parameter "lzs x:y" to the "ipppd"
+	  daemon to actually activate it, see    Documentation/isdn/README.LZS.
+
+	  PLEASE CHECK WHETHER USING THIS CODE CONSTITUTES A CRIME IN YOUR COUNTRY.
+
+	  For patent and license issues refer to Documentation/isdn/README.LZS.
+
+	  If unsure, say N.
+
 config ISDN_AUDIO
 	bool "Support audio via ISDN"
 	help
