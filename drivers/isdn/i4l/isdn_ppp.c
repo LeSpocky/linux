@@ -32,6 +32,7 @@ static void isdn_ppp_push_higher(isdn_net_dev *net_dev, isdn_net_local *lp,
 				 struct sk_buff *skb, int proto);
 static int isdn_ppp_if_get_unit(char *namebuf);
 static int isdn_ppp_set_compressor(struct ippp_struct *is, struct isdn_ppp_comp_data *);
+#if 0
 static struct sk_buff *isdn_ppp_decompress(struct sk_buff *,
 					   struct ippp_struct *, struct ippp_struct *, int *proto);
 static void isdn_ppp_receive_ccp(isdn_net_dev *net_dev, isdn_net_local *lp,
@@ -57,6 +58,7 @@ static void isdn_ppp_ccp_reset_trans(struct ippp_struct *is,
 				     struct isdn_ppp_resetparams *rp);
 static void isdn_ppp_ccp_reset_ack_rcvd(struct ippp_struct *is,
 					unsigned char id);
+#endif
 
 
 
@@ -300,9 +302,11 @@ isdn_ppp_open(int min, struct file *file)
 	is->link_decomp_stat  = is->decomp_stat = NULL;
 	is->compflags = 0;
 
+#if 0
 	is->reset = isdn_ppp_ccp_reset_alloc(is);
 	if (!is->reset)
 		return -ENOMEM;
+#endif
 
 	is->lp = NULL;
 	is->mp_seqno = 0;       /* MP sequence number */
@@ -409,9 +413,11 @@ isdn_ppp_release(int min, struct file *file)
 	is->comp_stat    = is->link_comp_stat    = NULL;
 	is->decomp_stat  = is->link_decomp_stat  = NULL;
 
+#if 0
 	/* Clean up if necessary */
 	if (is->reset)
 		isdn_ppp_ccp_reset_free(is);
+#endif
 
 	/* this slot is ready for new connections */
 	is->state = 0;
@@ -882,7 +888,9 @@ isdn_ppp_write(int min, struct file *file, const char __user *buf, int count)
 				isdn_ppp_frame_log("xmit", skb->data, skb->len, 32, is->unit, lp->ppp_slot);
 			}
 
+#if 0
 			isdn_ppp_send_ccp(lp->netdev, lp, skb); /* keeps CCP/compression states in sync */
+#endif
 
 			isdn_net_write_super(lp, skb);
 		}
@@ -1029,11 +1037,13 @@ void isdn_ppp_receive(isdn_net_dev *net_dev, isdn_net_local *lp, struct sk_buff 
 	}
 
 #ifdef CONFIG_ISDN_MPP
+#if 0
 	if (is->compflags & SC_LINK_DECOMP_ON) {
 		skb = isdn_ppp_decompress(skb, is, NULL, &proto);
 		if (!skb) // decompression error
 			return;
 	}
+#endif
 
 	if (!(is->mpppcfg & SC_REJ_MP_PROT)) { // we agreed to receive MPPP
 		if (proto == PPP_MP) {
@@ -1053,7 +1063,9 @@ void isdn_ppp_receive(isdn_net_dev *net_dev, isdn_net_local *lp, struct sk_buff 
 static void
 isdn_ppp_push_higher(isdn_net_dev *net_dev, isdn_net_local *lp, struct sk_buff *skb, int proto)
 {
+#if 0
 	struct net_device *dev = net_dev->dev;
+#endif
 	struct ippp_struct *is, *mis;
 	isdn_net_local *mlp = NULL;
 	int slot;
@@ -1081,6 +1093,7 @@ isdn_ppp_push_higher(isdn_net_dev *net_dev, isdn_net_local *lp, struct sk_buff *
 		printk(KERN_DEBUG "push, skb %d %04x\n", (int) skb->len, proto);
 		isdn_ppp_frame_log("rpush", skb->data, skb->len, 32, is->unit, lp->ppp_slot);
 	}
+#if 0
 	if (mis->compflags & SC_DECOMP_ON) {
 		skb = isdn_ppp_decompress(skb, is, mis, &proto);
 		if (!skb) // decompression error
@@ -1158,9 +1171,11 @@ isdn_ppp_push_higher(isdn_net_dev *net_dev, isdn_net_local *lp, struct sk_buff *
 			break;
 		/* fall through */
 	default:
+#endif
 		isdn_ppp_fill_rq(skb->data, skb->len, proto, lp->ppp_slot);	/* push data to pppd device */
 		kfree_skb(skb);
 		return;
+#if 0
 	}
 
 #ifdef CONFIG_IPPP_FILTER
@@ -1201,6 +1216,7 @@ isdn_ppp_push_higher(isdn_net_dev *net_dev, isdn_net_local *lp, struct sk_buff *
 	netif_rx(skb);
 	/* net_dev->local->stats.rx_packets++; done in isdn_net.c */
 	return;
+#endif
 
 drop_packet:
 	net_dev->local->stats.rx_dropped++;
@@ -1395,6 +1411,7 @@ isdn_ppp_xmit(struct sk_buff *skb, struct net_device *netdev)
 	}
 #endif
 
+#if 0
 	/*
 	 * normal (single link) or bundle compression
 	 */
@@ -1407,6 +1424,7 @@ isdn_ppp_xmit(struct sk_buff *skb, struct net_device *netdev)
 			printk(KERN_DEBUG "isdn_ppp: CCP not yet up - sending as-is\n");
 		}
 	}
+#endif
 
 	if (ipt->debug & 0x24)
 		printk(KERN_DEBUG "xmit2 skb, len %d, proto %04x\n", (int) skb->len, proto);
@@ -1438,11 +1456,13 @@ isdn_ppp_xmit(struct sk_buff *skb, struct net_device *netdev)
 	}
 #endif
 
+#if 0
 	/*
 	 * 'link in bundle' compression  ...
 	 */
 	if (ipt->compflags & SC_LINK_COMP_ON)
 		skb = isdn_ppp_compress(skb, &proto, ipt, ipts, 1);
+#endif
 
 	if ((ipt->pppcfg & SC_COMP_PROT) && (proto <= 0xff)) {
 		unsigned char *data = isdn_ppp_skb_push(&skb, 1);
@@ -2171,6 +2191,7 @@ isdn_ppp_hangup_slave(char *name)
 #endif
 }
 
+#if 0
 /*
  * PPP compression stuff
  */
@@ -2942,6 +2963,7 @@ static void isdn_ppp_send_ccp(isdn_net_dev *net_dev, isdn_net_local *lp, struct 
 		break;
 	}
 }
+#endif
 
 int isdn_ppp_register_compressor(struct isdn_ppp_compressor *ipc)
 {
