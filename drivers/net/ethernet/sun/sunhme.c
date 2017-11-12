@@ -703,8 +703,6 @@ static void happy_meal_timer(unsigned long data)
 			/* Enter force mode. */
 	do_force_mode:
 			hp->sw_bmcr = happy_meal_tcvr_read(hp, tregs, MII_BMCR);
-			printk(KERN_NOTICE "%s: Auto-Negotiation unsuccessful, trying force link mode\n",
-			       hp->dev->name);
 			hp->sw_bmcr = BMCR_SPEED100;
 			happy_meal_tcvr_write(hp, tregs, MII_BMCR, hp->sw_bmcr);
 
@@ -817,10 +815,6 @@ static void happy_meal_timer(unsigned long data)
 					/* Aieee, tried them all, reset the
 					 * chip and try all over again.
 					 */
-
-					/* Let the user know... */
-					printk(KERN_NOTICE "%s: Link down, cable problem?\n",
-					       hp->dev->name);
 
 					ret = happy_meal_init(hp);
 					if (ret) {
