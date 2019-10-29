@@ -17,6 +17,8 @@
 #define AT91_SFR_OHCIISR	0x14	/* OHCI INT Status Register */
 #define AT91_SFR_UTMICKTRIM	0x30	/* UTMI Clock Trimming Register */
 #define AT91_SFR_UTMISWAP	0x3c	/* UTMI DP/DM Pin Swapping Register */
+#define AT91_SFR_SN0		0x4c	/* Serial Number 0 Register */
+#define AT91_SFR_SN1		0x50	/* Serial Number 1 Register */
 #define AT91_SFR_LS		0x7c	/* Light Sleep Register */
 #define AT91_SFR_I2SCLKSEL	0x90	/* I2SC Register */
 #define AT91_SFR_WPMR		0xe4	/* Write Protection Mode Register */

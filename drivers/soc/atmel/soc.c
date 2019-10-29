@@ -13,9 +13,11 @@
 #define pr_fmt(fmt)	"AT91: " fmt
 
 #include <linux/io.h>
+#include <linux/mfd/syscon.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/of_platform.h>
+#include <linux/regmap.h>
 #include <linux/slab.h>
 #include <linux/sys_soc.h>
 
@@ -210,6 +212,7 @@ struct soc_device * __init at91_soc_init(const struct at91_soc *socs)
 	struct soc_device_attribute *soc_dev_attr;
 	const struct at91_soc *soc;
 	struct soc_device *soc_dev;
+	struct regmap *regmap_sfr;
 	u32 cidr, exid;
 	int ret;
 
@@ -239,6 +242,17 @@ struct soc_device * __init at91_soc_init(const struct at91_soc *socs)
 		pr_warn("Could not find matching SoC description\n");
 		return NULL;
 	}
+
+    regmap_sfr = syscon_regmap_lookup_by_compatible("atmel,sama5d2-sfr");
+    if (IS_ERR(regmap_sfr))
+        regmap_sfr = NULL;
+    else
+    {
+        unsigned int sn0, sn1;
+
+        ret = regmap_read(regmap_sfr, AT91_SFR_SN0, &sn0);
+        ret = regmap_read(regmap_sfr, AT91_SFR_SN1, &sn1);
+    }
 
 	soc_dev_attr = kzalloc(sizeof(*soc_dev_attr), GFP_KERNEL);
 	if (!soc_dev_attr)

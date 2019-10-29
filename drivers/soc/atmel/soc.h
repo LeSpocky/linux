@@ -15,6 +15,7 @@
 #include <linux/sys_soc.h>
 
 struct at91_soc {
+	u64 sn;
 	u32 cidr_match;
 	u32 exid_match;
 	const char *name;
