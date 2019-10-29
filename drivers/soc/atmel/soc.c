@@ -13,11 +13,14 @@
 #define pr_fmt(fmt)	"AT91: " fmt
 
 #include <linux/io.h>
+#include <linux/mfd/syscon.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/of_platform.h>
+#include <linux/regmap.h>
 #include <linux/slab.h>
 #include <linux/sys_soc.h>
+#include <soc/at91/atmel-sfr.h>
 
 #include "soc.h"
 
@@ -205,13 +208,32 @@ static int __init at91_get_cidr_exid_from_chipid(u32 *cidr, u32 *exid)
 	return 0;
 }
 
+static u64 __init at91_get_sn(struct regmap *regmap_sfr)
+{
+	unsigned int val;
+	u64 sn = 0;
+
+	if (!regmap_sfr)
+		return 0;
+
+	regmap_read(regmap_sfr, AT91_SFR_SN1, &val);
+	sn = val;
+	regmap_read(regmap_sfr, AT91_SFR_SN0, &val);
+	sn <<= 32;
+	sn |= val;
+
+	return sn;
+}
+
 struct soc_device * __init at91_soc_init(const struct at91_soc *socs)
 {
 	struct soc_device_attribute *soc_dev_attr;
 	const struct at91_soc *soc;
 	struct soc_device *soc_dev;
+	struct regmap *regmap_sfr;
 	u32 cidr, exid;
 	int ret;
+	u64 sn;
 
 	/*
 	 * With SAMA5D2 and later SoCs, CIDR and EXID registers are no more
@@ -240,9 +262,20 @@ struct soc_device * __init at91_soc_init(const struct at91_soc *socs)
 		return NULL;
 	}
 
+	regmap_sfr = syscon_regmap_lookup_by_compatible("atmel,sama5d2-sfr");
+	if (IS_ERR(regmap_sfr))
+		regmap_sfr = syscon_regmap_lookup_by_compatible("atmel,sama5d4-sfr");
+	if (IS_ERR(regmap_sfr))
+		regmap_sfr = NULL;
+	sn = at91_get_sn(regmap_sfr);
+
 	soc_dev_attr = kzalloc(sizeof(*soc_dev_attr), GFP_KERNEL);
 	if (!soc_dev_attr)
 		return NULL;
+
+	if (sn)
+		soc_dev_attr->serial_number = kasprintf(GFP_KERNEL,
+						        "%016llX", sn);
 
 	soc_dev_attr->family = soc->family;
 	soc_dev_attr->soc_id = soc->name;
@@ -250,6 +283,7 @@ struct soc_device * __init at91_soc_init(const struct at91_soc *socs)
 					   AT91_CIDR_VERSION(cidr));
 	soc_dev = soc_device_register(soc_dev_attr);
 	if (IS_ERR(soc_dev)) {
+		kfree(soc_dev_attr->serial_number);
 		kfree(soc_dev_attr->revision);
 		kfree(soc_dev_attr);
 		pr_warn("Could not register SoC device\n");
@@ -260,6 +294,7 @@ struct soc_device * __init at91_soc_init(const struct at91_soc *socs)
 		pr_info("Detected SoC family: %s\n", soc->family);
 	pr_info("Detected SoC: %s, revision %X\n", soc->name,
 		AT91_CIDR_VERSION(cidr));
+	pr_info("Detected SoC serial: 0x%016llX\n", sn);
 
 	return soc_dev;
 }
