@@ -20,6 +20,7 @@
 #include <linux/regmap.h>
 #include <linux/slab.h>
 #include <linux/sys_soc.h>
+#include <soc/at91/atmel-sfr.h>
 
 #include "soc.h"
 
@@ -211,14 +212,22 @@ static u64 __init at91_get_sn(struct regmap *regmap_sfr)
 {
 	unsigned int sn0, sn1;
 	int ret;
+	u64 sn;
 
 	if (!regmap_sfr)
 		return 0;
 
 	ret = regmap_read(regmap_sfr, AT91_SFR_SN0, &sn0);
-	ret = regmap_read(regmap_sfr, AT91_SFR_SN1, &sn1);
+	if(ret)
+		return 0;
 
-	/* tbd */
+	ret = regmap_read(regmap_sfr, AT91_SFR_SN1, &sn1);
+	if(ret)
+		return 0;
+
+	sn = (u64) sn0 | ((u64) sn1 << 32);
+
+	return sn;
 }
 
 struct soc_device * __init at91_soc_init(const struct at91_soc *socs)
@@ -229,6 +238,7 @@ struct soc_device * __init at91_soc_init(const struct at91_soc *socs)
 	struct regmap *regmap_sfr;
 	u32 cidr, exid;
 	int ret;
+	u64 sn;
 
 	/*
 	 * With SAMA5D2 and later SoCs, CIDR and EXID registers are no more
@@ -257,10 +267,12 @@ struct soc_device * __init at91_soc_init(const struct at91_soc *socs)
 		return NULL;
 	}
 
-	if (IS_ERR((regmap_sfr = syscon_regmap_lookup_by_compatible("atmel,sama5d2-sfr"))))
-	else if (IS_ERR((regmap_sfr = syscon_regmap_lookup_by_compatible("atmel,sama5d4-sfr"))))
-	else
+	regmap_sfr = syscon_regmap_lookup_by_compatible("atmel,sama5d2-sfr");
+	if (IS_ERR(regmap_sfr))
+		regmap_sfr = syscon_regmap_lookup_by_compatible("atmel,sama5d4-sfr");
+	if (IS_ERR(regmap_sfr))
 		regmap_sfr = NULL;
+	sn = at91_get_sn(regmap_sfr);
 
 	soc_dev_attr = kzalloc(sizeof(*soc_dev_attr), GFP_KERNEL);
 	if (!soc_dev_attr)
