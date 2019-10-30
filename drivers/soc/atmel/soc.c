@@ -218,11 +218,11 @@ static u64 __init at91_get_sn(struct regmap *regmap_sfr)
 		return 0;
 
 	ret = regmap_read(regmap_sfr, AT91_SFR_SN0, &sn0);
-	if(ret)
+	if (ret)
 		return 0;
 
 	ret = regmap_read(regmap_sfr, AT91_SFR_SN1, &sn1);
-	if(ret)
+	if (ret)
 		return 0;
 
 	sn = (u64) sn0 | ((u64) sn1 << 32);
@@ -294,6 +294,7 @@ struct soc_device * __init at91_soc_init(const struct at91_soc *socs)
 		pr_info("Detected SoC family: %s\n", soc->family);
 	pr_info("Detected SoC: %s, revision %X\n", soc->name,
 		AT91_CIDR_VERSION(cidr));
+	pr_info("Detected SoC serial: 0x%016llX\n", sn);
 
 	return soc_dev;
 }
