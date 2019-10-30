@@ -207,6 +207,20 @@ static int __init at91_get_cidr_exid_from_chipid(u32 *cidr, u32 *exid)
 	return 0;
 }
 
+static u64 __init at91_get_sn(struct regmap *regmap_sfr)
+{
+	unsigned int sn0, sn1;
+	int ret;
+
+	if (!regmap_sfr)
+		return 0;
+
+	ret = regmap_read(regmap_sfr, AT91_SFR_SN0, &sn0);
+	ret = regmap_read(regmap_sfr, AT91_SFR_SN1, &sn1);
+
+	/* tbd */
+}
+
 struct soc_device * __init at91_soc_init(const struct at91_soc *socs)
 {
 	struct soc_device_attribute *soc_dev_attr;
@@ -243,16 +257,10 @@ struct soc_device * __init at91_soc_init(const struct at91_soc *socs)
 		return NULL;
 	}
 
-    regmap_sfr = syscon_regmap_lookup_by_compatible("atmel,sama5d2-sfr");
-    if (IS_ERR(regmap_sfr))
-        regmap_sfr = NULL;
-    else
-    {
-        unsigned int sn0, sn1;
-
-        ret = regmap_read(regmap_sfr, AT91_SFR_SN0, &sn0);
-        ret = regmap_read(regmap_sfr, AT91_SFR_SN1, &sn1);
-    }
+	if (IS_ERR((regmap_sfr = syscon_regmap_lookup_by_compatible("atmel,sama5d2-sfr"))))
+	else if (IS_ERR((regmap_sfr = syscon_regmap_lookup_by_compatible("atmel,sama5d4-sfr"))))
+	else
+		regmap_sfr = NULL;
 
 	soc_dev_attr = kzalloc(sizeof(*soc_dev_attr), GFP_KERNEL);
 	if (!soc_dev_attr)
