@@ -278,6 +278,10 @@ struct soc_device * __init at91_soc_init(const struct at91_soc *socs)
 	if (!soc_dev_attr)
 		return NULL;
 
+	if (sn)
+		soc_dev_attr->serial_number = kasprintf(GFP_KERNEL,
+						        "%llu", sn);
+
 	soc_dev_attr->family = soc->family;
 	soc_dev_attr->soc_id = soc->name;
 	soc_dev_attr->revision = kasprintf(GFP_KERNEL, "%X",
