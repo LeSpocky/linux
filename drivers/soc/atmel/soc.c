@@ -210,22 +210,17 @@ static int __init at91_get_cidr_exid_from_chipid(u32 *cidr, u32 *exid)
 
 static u64 __init at91_get_sn(struct regmap *regmap_sfr)
 {
-	unsigned int sn0, sn1;
-	int ret;
-	u64 sn;
+	unsigned int val;
+	u64 sn = 0;
 
 	if (!regmap_sfr)
 		return 0;
 
-	ret = regmap_read(regmap_sfr, AT91_SFR_SN0, &sn0);
-	if (ret)
-		return 0;
-
-	ret = regmap_read(regmap_sfr, AT91_SFR_SN1, &sn1);
-	if (ret)
-		return 0;
-
-	sn = (u64) sn0 | ((u64) sn1 << 32);
+	regmap_read(regmap_sfr, AT91_SFR_SN1, &val);
+	sn = val;
+	regmap_read(regmap_sfr, AT91_SFR_SN0, &val);
+	sn <<= 32;
+	sn |= val;
 
 	return sn;
 }
@@ -280,7 +275,7 @@ struct soc_device * __init at91_soc_init(const struct at91_soc *socs)
 
 	if (sn)
 		soc_dev_attr->serial_number = kasprintf(GFP_KERNEL,
-						        "%llu", sn);
+						        "%016llX", sn);
 
 	soc_dev_attr->family = soc->family;
 	soc_dev_attr->soc_id = soc->name;
@@ -288,6 +283,7 @@ struct soc_device * __init at91_soc_init(const struct at91_soc *socs)
 					   AT91_CIDR_VERSION(cidr));
 	soc_dev = soc_device_register(soc_dev_attr);
 	if (IS_ERR(soc_dev)) {
+		kfree(soc_dev_attr->serial_number);
 		kfree(soc_dev_attr->revision);
 		kfree(soc_dev_attr);
 		pr_warn("Could not register SoC device\n");
