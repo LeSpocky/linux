@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: GPL-2.0-only
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/leds/leds-pwm.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: LEDs connected to PWM
+
+maintainers:
+  - Pavel Machek <pavel@ucw.cz>
+
+description:
+  Each LED is represented as a sub-node of the pwm-leds device.  Each
+  node's name represents the name of the corresponding LED.
+
+properties:
+  compatible:
+    const: pwm-leds
+
+patternProperties:
+  "^pwm-led-([0-9a-f])$":
+    type: object
+
+    $ref: common.yaml#
+
+    properties:
+      pwms:
+        description:
+          "PWM property to point to the PWM device (phandle)/port (id)
+          and to specify the period time to be used:
+          <&phandle id period_ns>;"
+
+      pwm-names:
+        description:
+          "Name to be used by the PWM subsystem for the PWM device For
+          the pwms and pwm-names property please refer to:
+          Documentation/devicetree/bindings/pwm/pwm.txt"
+
+      max-brightness:
+        description:
+          Maximum brightness possible for the LED
+
+      active-low:
+        description:
+          For PWMs where the LED is wired to supply rather than ground.
+
+    required:
+      - pwms
+      - max-brightness
+
+examples:
+  - |
+
+    #include <dt-bindings/leds/common.h>
+
+    twl_pwm: pwm {
+        /* provides two PWMs (id 0, 1 for PWM1 and PWM2) */
+        compatible = "ti,twl6030-pwm";
+        #pwm-cells = <2>;
+    };
+
+    twl_pwmled: pwmled {
+        /* provides one PWM (id 0 for Charing indicator LED) */
+        compatible = "ti,twl6030-pwmled";
+        #pwm-cells = <2>;
+    };
+
+    pwm_leds {
+        compatible = "pwm-leds";
+
+        pwm-led-1 {
+            label = "omap4::keypad";
+            pwms = <&twl_pwm 0 7812500>;
+            max-brightness = <127>;
+        };
+
+        pwm-led-2 {
+            color = <LED_COLOR_ID_GREEN>;
+            function = LED_FUNCTION_CHARGING;
+            pwms = <&twl_pwmled 0 7812500>;
+            max-brightness = <255>;
+        };
+    };
+
+...
