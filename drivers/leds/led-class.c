@@ -346,7 +346,7 @@ int led_classdev_register_ext(struct device *parent,
 	const char *proposed_name = composed_name;
 	int ret;
 
-	if (init_data) {
+	if (init_data && init_data->fwnode) {
 		if (init_data->devname_mandatory && !init_data->devicename) {
 			dev_err(parent, "Mandatory device name is missing");
 			return -EINVAL;
