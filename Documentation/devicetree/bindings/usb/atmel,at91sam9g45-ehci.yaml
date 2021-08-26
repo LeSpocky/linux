@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/usb/atmel,at91sam9g45-ehci.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: Atmel/Microchip SoC USB EHCI Host Controller
+
+maintainers:
+  - Someone™ <kernel@example.com>
+
+# Alan Stern <stern@rowland.harvard.edu> (maintainer:USB EHCI DRIVER)
+# Greg Kroah-Hartman <gregkh@linuxfoundation.org> (supporter:USB SUBSYSTEM)
+# Nicolas Ferre <nicolas.ferre@microchip.com> (supporter:ARM/Microchip (AT91) SoC support)
+# Alexandre Belloni <alexandre.belloni@bootlin.com> (supporter:ARM/Microchip (AT91) SoC support)
+# Ludovic Desroches <ludovic.desroches@microchip.com> (supporter:ARM/Microchip (AT91) SoC support)
+# linux-usb@vger.kernel.org (open list:USB EHCI DRIVER)
+# linux-arm-kernel@lists.infradead.org (moderated list:ARM/Microchip (AT91) SoC support)
+# linux-kernel@vger.kernel.org (open list)
+
+properties:
+  compatible:
+    const: atmel,at91sam9g45-ehci
+
+  reg:
+    maxItems: 1
+    description:
+      Address and length of the register set for the device.
+
+  interrupts:
+    maxItems: 1
+    description:
+      Should contain ehci interrupt.
+
+  clocks:
+    description:
+      Should reference the peripheral and the UTMI clocks.
+    items:
+      - description: usb_clk for the UTMI clock
+      - description: ehci_clk for the peripheral clock
+
+  clock-names:
+    items:
+      - const: usb_clk
+      - const: ehci_clk
+
+additionalProperties: false
+
+examples:
+  - |
+
+    usb1: usb@800000 {
+        compatible = "atmel,at91sam9g45-ehci", "usb-ehci";
+        reg = <0x00800000 0x100000>;
+        interrupts = <22 4>;
+        clocks = <&utmi>, <&uhphs_clk>;
+        clock-names = "usb_clk", "ehci_clk";
+    };
+
+...
