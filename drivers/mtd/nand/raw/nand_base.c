@@ -916,6 +916,28 @@ err_reset_chip:
 	return ret;
 }
 
+static int of_get_nand_onfi_timing_mode(struct nand_chip *chip)
+{
+	struct device_node *dn = nand_get_flash_node(chip);
+	u32 val;
+	int ret;
+
+	ret = of_property_read_u32(dn, "nand-onfi-timing-mode", &val);
+
+#if 0
+	if (ret < 0)
+	{
+		pr_debug("Error (%d) reading property 'nand-onfi-timing-mode'.\n", ret);
+		return ret;
+	} else {
+		pr_debug("Got nand-onfi-timing-mode val %u\n", val);
+		return val;
+	}
+#else
+	return (ret < 0) ? ret : val;
+#endif
+}
+
 /**
  * nand_choose_best_sdr_timings - Pick up the best SDR timings that both the
  *                                NAND controller and the NAND chip support
@@ -935,7 +957,15 @@ int nand_choose_best_sdr_timings(struct nand_chip *chip,
 
 	iface->type = NAND_SDR_IFACE;
 
-	if (spec_timings) {
+	mode = of_get_nand_onfi_timing_mode(chip);
+
+	if (mode >= 0) {
+		/* Optionally override best mode from device tree. */
+		pr_debug("Overriding automatic NAND timing mode, trying ONFI mode %d on %s interface\n",
+			 mode, "SDR");
+		best_mode = mode;
+	} else if (spec_timings) {
+		pr_debug("Trying specific NAND timings on %s interface\n", "SDR");
 		iface->timings.sdr = *spec_timings;
 		iface->timings.mode = onfi_find_closest_sdr_mode(spec_timings);
 
@@ -943,6 +973,7 @@ int nand_choose_best_sdr_timings(struct nand_chip *chip,
 		ret = ops->setup_interface(chip, NAND_DATA_IFACE_CHECK_ONLY,
 					   iface);
 		if (!ret) {
+			pr_debug("Using specific NAND timings on %s interface\n", "SDR");
 			chip->best_interface_config = iface;
 			return ret;
 		}
@@ -951,6 +982,7 @@ int nand_choose_best_sdr_timings(struct nand_chip *chip,
 		best_mode = iface->timings.mode;
 	} else if (chip->parameters.onfi) {
 		best_mode = fls(chip->parameters.onfi->sdr_timing_modes) - 1;
+		pr_debug("Trying ONFI mode %d on %s interface\n", best_mode, "SDR");
 	}
 
 	for (mode = best_mode; mode >= 0; mode--) {
@@ -963,6 +995,11 @@ int nand_choose_best_sdr_timings(struct nand_chip *chip,
 			break;
 		}
 	}
+
+	if (ret)
+		pr_debug("No timing mode found for %s interface\n", "SDR");
+	else
+		pr_debug("Using ONFI timing mode %d for %s interface\n", mode, "SDR");
 
 	return ret;
 }
@@ -986,7 +1023,15 @@ int nand_choose_best_nvddr_timings(struct nand_chip *chip,
 
 	iface->type = NAND_NVDDR_IFACE;
 
-	if (spec_timings) {
+	mode = of_get_nand_onfi_timing_mode(chip);
+
+	if (mode >= 0) {
+		/* Optionally override best mode from device tree. */
+		pr_debug("Overriding automatic NAND timing mode, trying ONFI mode %d on %s interface\n",
+			 mode, "NV-DDR");
+		best_mode = mode;
+	} else if (spec_timings) {
+		pr_debug("Trying specific NAND timings on %s interface\n", "NV-DDR");
 		iface->timings.nvddr = *spec_timings;
 		iface->timings.mode = onfi_find_closest_nvddr_mode(spec_timings);
 
@@ -994,6 +1039,7 @@ int nand_choose_best_nvddr_timings(struct nand_chip *chip,
 		ret = ops->setup_interface(chip, NAND_DATA_IFACE_CHECK_ONLY,
 					   iface);
 		if (!ret) {
+			pr_debug("Using specific NAND timings on %s interface\n", "NV-DDR");
 			chip->best_interface_config = iface;
 			return ret;
 		}
@@ -1002,6 +1048,7 @@ int nand_choose_best_nvddr_timings(struct nand_chip *chip,
 		best_mode = iface->timings.mode;
 	} else if (chip->parameters.onfi) {
 		best_mode = fls(chip->parameters.onfi->nvddr_timing_modes) - 1;
+		pr_debug("Trying ONFI mode %d on %s interface\n", best_mode, "NV-DDR");
 	}
 
 	for (mode = best_mode; mode >= 0; mode--) {
@@ -1014,6 +1061,11 @@ int nand_choose_best_nvddr_timings(struct nand_chip *chip,
 			break;
 		}
 	}
+
+	if (ret)
+		pr_debug("No timing mode found for %s interface\n", "NV-DDR");
+	else
+		pr_debug("Using ONFI timing mode %d for %s interface\n", mode, "NV-DDR");
 
 	return ret;
 }
